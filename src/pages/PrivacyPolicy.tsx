@@ -1,9 +1,12 @@
+import { useTranslation } from '../lib/i18n'
+
 export function PrivacyPolicy() {
+  const { t } = useTranslation()
   return (
     <main className="legal-page" aria-labelledby="privacy-title">
-      <p className="brand-mark">Universal Translator</p>
-      <h1 id="privacy-title">Privacy Policy</h1>
-      <p className="legal-updated">Last updated: April 12, 2026</p>
+      <p className="brand-mark">{t('brand_name')}</p>
+      <h1 id="privacy-title">{t('privacy_policy')}</h1>
+      <p className="legal-updated">{t('last_updated')}: April 12, 2026</p>
 
       <section>
         <h2>Information collected</h2>
@@ -40,7 +43,7 @@ export function PrivacyPolicy() {
         <p>Contact us at: privacy@example.com.</p>
       </section>
 
-      <a className="secondary-action legal-home-link" href="/">Back to home</a>
+      <a className="secondary-action legal-home-link" href="/">{t('back_to_home')}</a>
     </main>
   )
 }

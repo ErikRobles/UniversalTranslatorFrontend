@@ -1,4 +1,5 @@
 import { useState, type FormEvent, type ReactNode } from 'react'
+import { useTranslation } from '../../lib/i18n'
 
 interface AuthFormProps {
   title: string
@@ -10,6 +11,7 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ title, submitLabel, helperText, isLoading, children, onSubmit }: AuthFormProps) {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -17,11 +19,11 @@ export function AuthForm({ title, submitLabel, helperText, isLoading, children, 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     if (!email.includes('@')) {
-      setError('Enter a valid email address.')
+      setError(t('error_invalid_email'))
       return
     }
     if (password.length < 8) {
-      setError('Password must be at least 8 characters.')
+      setError(t('error_password_length'))
       return
     }
     setError(null)
@@ -36,12 +38,12 @@ export function AuthForm({ title, submitLabel, helperText, isLoading, children, 
       </div>
 
       <label>
-        Email
+        {t('email_label')}
         <input value={email} onChange={(event) => setEmail(event.target.value)} name="email" type="email" />
       </label>
 
       <label>
-        Password
+        {t('password_label')}
         <input value={password} onChange={(event) => setPassword(event.target.value)} name="password" type="password" />
       </label>
 
@@ -54,7 +56,7 @@ export function AuthForm({ title, submitLabel, helperText, isLoading, children, 
       ) : null}
 
       <button type="submit" className="auth-submit" disabled={isLoading}>
-        {isLoading ? 'Processing...' : submitLabel}
+        {isLoading ? t('processing') : submitLabel}
       </button>
     </form>
   )

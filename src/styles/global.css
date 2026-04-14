@@ -814,3 +814,31 @@ textarea {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Language Selector */
+.language-selector-container {
+  display: flex;
+  align-items: center;
+}
+
+.language-selector {
+  width: auto;
+  min-height: 40px;
+  padding: 0.4rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid var(--border-soft);
+  background: var(--surface-strong);
+  color: var(--text-main);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.language-selector:hover {
+  border-color: var(--accent);
+}
+
+.workspace-header .hero-actions .language-selector-container,
+.hero-actions .language-selector-container {
+  margin-right: 0.5rem;
+}

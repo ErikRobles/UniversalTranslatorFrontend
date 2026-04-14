@@ -3,6 +3,7 @@ import { useMicrophoneCapture } from '../hooks/useMicrophoneCapture'
 import { StateIndicator } from './StateIndicator'
 import { TranscriptPanel } from './TranscriptPanel'
 import { TurnIndicator } from './TurnIndicator'
+import { useTranslation } from '../lib/i18n'
 import type { ConversationView as ConversationViewModel, SpeakerRole, UiSessionState } from '../types/session'
 
 interface ConversationViewProps {
@@ -34,6 +35,7 @@ export function ConversationView({
   onNewConversation,
   usageLimitReached,
 }: ConversationViewProps) {
+  const { t } = useTranslation();
   console.log(`[INSTRUMENTATION] ConversationView: received transcript length=${conversationView?.transcript.length ?? 0}`);
   const { isRecording, startRecording, stopRecording } = useMicrophoneCapture()
   const [isEndingConversation, setIsEndingConversation] = useState(false)
@@ -103,7 +105,15 @@ export function ConversationView({
     isStoppingRecordingRef.current = true
     try {
       const { buffer, sampleRate } = await stopRecording()
-      console.log(`[INSTRUMENTATION] [${new Date().toISOString()}] stopRecording SUCCESS, submitting...`)
+      const endTs = new Date().toISOString()
+
+      // FINAL GUARD: If the gate closed while we were stopping, discard.
+      if (!canSubmit) {
+        console.warn(`[INSTRUMENTATION] [${endTs}] DISCARDING recording: turn is no longer valid (canSubmit=false)`)
+        return
+      }
+
+      console.log(`[INSTRUMENTATION] [${endTs}] stopRecording SUCCESS, submitting...`)
       await onSubmitTurn(buffer, sampleRate)
     } catch (err) {
       console.error(`[INSTRUMENTATION] [${new Date().toISOString()}] handleStopRecording FAILURE`, err)
@@ -130,17 +140,17 @@ export function ConversationView({
   }
 
   const getButtonText = () => {
-    if (conversationView?.session_status === 'ended') return 'Conversation Ended'
-    if (usageLimitReached) return 'Limit Reached'
-    if (isChiming) return 'Get Ready...'
-    if (isRecording) return '⏹ Stop & Translate'
-    if (isLoading) return 'AI Processing...'
-    if (uiState === 'playback_output') return 'AI is Speaking...'
-    if (uiState === 'processing') return 'Interpreting...'
-    if (uiState === 'turn_complete') return 'Handoff...'
-    if (!isSocketReady || !isSessionBound) return 'Connecting...'
-    if (uiState === 'other_speaker_active' || !isOurTurnAccordingToBackend) return "Other Speaker's Turn"
-    return '🎤 Start Speaking'
+    if (conversationView?.session_status === 'ended') return t('conversation_ended')
+    if (usageLimitReached) return t('limit_reached')
+    if (isChiming) return t('get_ready')
+    if (isRecording) return `⏹ ${t('stop_and_translate')}`
+    if (isLoading) return t('ai_processing')
+    if (uiState === 'playback_output') return t('ai_is_speaking')
+    if (uiState === 'processing') return t('interpreting')
+    if (uiState === 'turn_complete') return t('handoff')
+    if (!isSocketReady || !isSessionBound) return t('connecting')
+    if (uiState === 'other_speaker_active' || !isOurTurnAccordingToBackend) return t('other_speaker_turn')
+    return `🎤 ${t('start_speaking')}`
   }
 
   useEffect(() => {
@@ -170,15 +180,23 @@ export function ConversationView({
     void handleStartRecording()
   }, [canRecordNow, conversationView, isEndingConversation, isRecording])
 
+  // CLEANUP EFFECT: If we are recording but the gate closes, force stop the microphone.
+  useEffect(() => {
+    if (isRecording && !canRecordNow && !isChiming && !isStoppingRecordingRef.current) {
+      console.warn(`[INSTRUMENTATION] [${new Date().toISOString()}] Force stopping recording: gate closed (canRecordNow=false)`)
+      void stopRecording()
+    }
+  }, [isRecording, canRecordNow, isChiming, stopRecording])
+
   return (
     <div className="conversation-layout">
       {usageLimitReached ? (
         <div className="usage-limit-modal-backdrop" role="presentation">
           <div className="usage-limit-modal" role="dialog" aria-modal="true" aria-labelledby="usage-limit-title">
-            <h2 id="usage-limit-title">You've reached your free limit</h2>
-            <p>Continue your conversations by upgrading to a paid plan.</p>
+            <h2 id="usage-limit-title">{t('limit_reached_title')}</h2>
+            <p>{t('limit_reached_support')}</p>
             <a className="paypal-button" href="/#pricing">
-              View plans
+              {t('view_plans')}
             </a>
           </div>
         </div>
@@ -198,8 +216,8 @@ export function ConversationView({
       <section className="conversation-card composer-panel" aria-label="Turn composer">
         <div className="panel-header">
           <div>
-            <p className="eyebrow">Live conversation</p>
-            <strong>{canRecordNow ? 'Your turn to speak' : 'Please wait for your turn'}</strong>
+            <p className="eyebrow">{t('live_conversation')}</p>
+            <strong>{canRecordNow ? t('your_turn') : t('please_wait')}</strong>
           </div>
         </div>
 
@@ -208,6 +226,10 @@ export function ConversationView({
             {errorMessage}
           </p>
         ) : null}
+
+        <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '0 0 0.5rem 0' }}>
+          {t('instruction_helper')}
+        </p>
 
         <div className="composer-actions" style={{ flexDirection: 'column', gap: '1rem' }}>
           {!isRecording ? (
@@ -252,18 +274,18 @@ export function ConversationView({
             onClick={() => void handleEndConversation()}
             disabled={conversationView?.session_status === 'ended' || isEndingConversation || conversationView === null}
           >
-            {conversationView?.session_status === 'ended' ? 'Conversation Ended' : isEndingConversation ? 'Ending...' : 'End Conversation'}
+            {conversationView?.session_status === 'ended' ? t('conversation_ended') : isEndingConversation ? t('ending') : t('end_conversation')}
           </button>
 
           {conversationView?.session_status === 'ended' ? (
             <button type="button" className="primary-action" onClick={onNewConversation}>
-              Start New Conversation
+              {t('start_new_conversation')}
             </button>
           ) : null}
 
           {/* Hidden Advance state button to maintain logic but remove from UI */}
           <button type="button" className="secondary-action" onClick={onAdvanceTurn} style={{ display: 'none' }}>
-            Advance state
+            {t('advance_state')}
           </button>
         </div>
       </section>

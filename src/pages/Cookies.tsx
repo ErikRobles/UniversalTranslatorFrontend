@@ -1,9 +1,12 @@
+import { useTranslation } from '../lib/i18n'
+
 export function Cookies() {
+  const { t } = useTranslation()
   return (
     <main className="legal-page" aria-labelledby="cookies-title">
-      <p className="brand-mark">Universal Translator</p>
-      <h1 id="cookies-title">Cookies Policy</h1>
-      <p className="legal-updated">Last updated: April 12, 2026</p>
+      <p className="brand-mark">{t('brand_name')}</p>
+      <h1 id="cookies-title">{t('cookies_policy')}</h1>
+      <p className="legal-updated">{t('last_updated')}: April 12, 2026</p>
 
       <section>
         <h2>Basic cookie usage</h2>
@@ -21,11 +24,11 @@ export function Cookies() {
       </section>
 
       <section>
-        <h2>Privacy Policy</h2>
-        <p>For more information about how information is handled, please review our <a href="/privacy">Privacy Policy</a>.</p>
+        <h2>{t('privacy_policy')}</h2>
+        <p>For more information about how information is handled, please review our <a href="/privacy">{t('privacy_policy')}</a>.</p>
       </section>
 
-      <a className="secondary-action legal-home-link" href="/">Back to home</a>
+      <a className="secondary-action legal-home-link" href="/">{t('back_to_home')}</a>
     </main>
   )
 }

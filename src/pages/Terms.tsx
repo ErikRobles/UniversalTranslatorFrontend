@@ -1,9 +1,12 @@
+import { useTranslation } from '../lib/i18n'
+
 export function Terms() {
+  const { t } = useTranslation()
   return (
     <main className="legal-page" aria-labelledby="terms-title">
-      <p className="brand-mark">Universal Translator</p>
-      <h1 id="terms-title">Terms &amp; Conditions</h1>
-      <p className="legal-updated">Last updated: April 12, 2026</p>
+      <p className="brand-mark">{t('brand_name')}</p>
+      <h1 id="terms-title">{t('terms_of_service')}</h1>
+      <p className="legal-updated">{t('last_updated')}: April 12, 2026</p>
 
       <section>
         <h2>Service description</h2>
@@ -37,7 +40,7 @@ export function Terms() {
         <p>To the maximum extent permitted by law, the company is not liable for decisions made based on translations, damages resulting from incorrect translations, or any business, legal, personal, financial, medical, or other consequences arising from use of the service.</p>
       </section>
 
-      <a className="secondary-action legal-home-link" href="/">Back to home</a>
+      <a className="secondary-action legal-home-link" href="/">{t('back_to_home')}</a>
     </main>
   )
 }

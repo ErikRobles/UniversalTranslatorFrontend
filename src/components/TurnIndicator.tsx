@@ -1,4 +1,5 @@
 import type { ConversationDirection, SpeakerRole } from '../types/session'
+import { useTranslation } from '../lib/i18n'
 
 export function TurnIndicator({
   currentTurnSpeaker,
@@ -9,10 +10,11 @@ export function TurnIndicator({
   direction: ConversationDirection
   participantRole: SpeakerRole
 }) {
-  const speakerName = currentTurnSpeaker === participantRole ? 'You' : 'Other person'
+  const { t } = useTranslation()
+  const speakerName = currentTurnSpeaker === participantRole ? t('you') : t('other_person')
   return (
     <section className="conversation-card turn-indicator" aria-label="Current turn">
-      <p className="eyebrow">Current turn</p>
+      <p className="eyebrow">{t('current_turn')}</p>
       <strong>{speakerName}</strong>
       <span>
         {direction.source_display_name} → {direction.target_display_name}
@@ -20,3 +22,4 @@ export function TurnIndicator({
     </section>
   )
 }
+

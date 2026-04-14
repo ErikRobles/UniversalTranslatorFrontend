@@ -3,6 +3,7 @@ import { useMemo, useState, useCallback, useEffect } from 'react'
 import { ConversationView } from '../components/ConversationView'
 import { useSessionState } from '../hooks/useSessionState'
 import { useAuth } from '../lib/auth/AuthContext'
+import { useTranslation } from '../lib/i18n'
 import type { SpeakerRole } from '../types/session'
 
 const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? '') + '/api/v1'
@@ -20,29 +21,35 @@ interface LanguagePairOption {
   is_active: boolean
 }
 
-const FALLBACK_LANGUAGE_PROFILES: LanguageProfileOption[] = [
-  { id: 'lp-zh-cn', display_name: 'Mandarin Chinese (Mainland)', locale_code: 'zh-CN', is_active: true },
-  { id: 'lp-zh-tw', display_name: 'Mandarin Chinese (Taiwan)', locale_code: 'zh-TW', is_active: true },
-  { id: 'lp-yue-hk', display_name: 'Cantonese (Hong Kong)', locale_code: 'yue-HK', is_active: true },
-  { id: 'lp-yue-gz', display_name: 'Cantonese (Guangzhou)', locale_code: 'yue-GZ', is_active: true },
-  { id: 'lp-es-mx', display_name: 'Spanish (Mexico)', locale_code: 'es-MX', is_active: true },
-  { id: 'lp-es-es', display_name: 'Spanish (Spain)', locale_code: 'es-ES', is_active: true },
-  { id: 'lp-es-419', display_name: 'Spanish (Latin America)', locale_code: 'es-419', is_active: true },
-  { id: 'lp-fr-fr', display_name: 'French (France)', locale_code: 'fr-FR', is_active: true },
-  { id: 'lp-de-de', display_name: 'German (Germany)', locale_code: 'de-DE', is_active: true },
-  { id: 'lp-pt-br', display_name: 'Portuguese (Brazil)', locale_code: 'pt-BR', is_active: true },
-  { id: 'lp-ru-ru', display_name: 'Russian (Russia)', locale_code: 'ru-RU', is_active: true },
-  { id: 'lp-en-us', display_name: 'English (US)', locale_code: 'en-US', is_active: true },
-  { id: 'lp-en-gb', display_name: 'English (UK)', locale_code: 'en-GB', is_active: true },
-]
-
 export function SessionPage() {
+  const { t } = useTranslation()
   const { authState, logout } = useAuth()
+
+  const FALLBACK_LANGUAGE_PROFILES: LanguageProfileOption[] = useMemo(() => [
+    { id: 'lp-zh-cn', display_name: t('lp_zh_cn'), locale_code: 'zh-CN', is_active: true },
+    { id: 'lp-zh-tw', display_name: t('lp_zh_tw'), locale_code: 'zh-TW', is_active: true },
+    { id: 'lp-yue-hk', display_name: t('lp_yue_hk'), locale_code: 'yue-HK', is_active: true },
+    { id: 'lp-yue-gz', display_name: t('lp_yue_gz'), locale_code: 'yue-GZ', is_active: true },
+    { id: 'lp-es-mx', display_name: t('lp_es_mx'), locale_code: 'es-MX', is_active: true },
+    { id: 'lp-es-es', display_name: t('lp_es_es'), locale_code: 'es-ES', is_active: true },
+    { id: 'lp-es-419', display_name: t('lp_es_419'), locale_code: 'es-419', is_active: true },
+    { id: 'lp-fr-fr', display_name: t('lp_fr_fr'), locale_code: 'fr-FR', is_active: true },
+    { id: 'lp-de-de', display_name: t('lp_de_de'), locale_code: 'de-DE', is_active: true },
+    { id: 'lp-pt-br', display_name: t('lp_pt_br'), locale_code: 'pt-BR', is_active: true },
+    { id: 'lp-ru-ru', display_name: t('lp_ru_ru'), locale_code: 'ru-RU', is_active: true },
+    { id: 'lp-en-us', display_name: t('lp_en_us'), locale_code: 'en-US', is_active: true },
+    { id: 'lp-en-gb', display_name: t('lp_en_gb'), locale_code: 'en-GB', is_active: true },
+  ], [t])
+
   const [sessionIdInput, setSessionIdInput] = useState('')
   const [activeSessionId, setActiveSessionId] = useState('')
   const [participantRole, setParticipantRole] = useState<SpeakerRole>('A')
   const [isCreating, setIsCreating] = useState(false)
   const [availableProfiles, setAvailableProfiles] = useState<LanguageProfileOption[]>(FALLBACK_LANGUAGE_PROFILES)
+
+  useEffect(() => {
+    setAvailableProfiles(FALLBACK_LANGUAGE_PROFILES)
+  }, [FALLBACK_LANGUAGE_PROFILES])
   const [availablePairs, setAvailablePairs] = useState<LanguagePairOption[]>([])
   const [speakerAProfileId, setSpeakerAProfileId] = useState('lp-es-mx')
   const [speakerBProfileId, setSpeakerBProfileId] = useState('lp-en-us')
@@ -201,11 +208,11 @@ export function SessionPage() {
       setActiveSessionId(session.id)
     } catch (err) {
       console.error(err)
-      alert(err instanceof Error ? err.message : 'Failed to create session')
+      alert(err instanceof Error ? err.message : t('failed_to_create_session'))
     } finally {
       setIsCreating(false)
     }
-  }, [authState.accessToken, logout, speakerAProfileId, speakerBProfileId])
+  }, [authState.accessToken, logout, speakerAProfileId, speakerBProfileId, t])
 
   const startNewConversation = useCallback(() => {
     setSessionIdInput('')
@@ -216,11 +223,11 @@ export function SessionPage() {
   return (
     <section className="session-page" aria-labelledby="session-page-title">
       <div className="conversation-card session-config" style={{ display: activeSessionId ? 'none' : 'grid' }}>
-        <p className="eyebrow">Interpreter workspace</p>
-        <h2 id="session-page-title" style={{ display: 'none' }}>Conversation session</h2>
+        <p className="eyebrow">{t('workspace_title')}</p>
+        <h2 id="session-page-title" style={{ display: 'none' }}>{t('workspace_title')}</h2>
         <div style={{ display: 'grid', gap: '0.75rem' }}>
           <label style={{ display: 'grid', gap: '0.35rem' }}>
-            <span>Speaker A language</span>
+            <span>{t('speaker_a_lang')}</span>
             <select value={speakerAProfileId} onChange={(event) => setSpeakerAProfileId(event.target.value)}>
               {speakerAOptions.map((profile) => (
                 <option key={profile.id} value={profile.id}>
@@ -231,8 +238,9 @@ export function SessionPage() {
           </label>
 
           <label style={{ display: 'grid', gap: '0.35rem' }}>
-            <span>Speaker B language</span>
+            <span>{t('speaker_b_lang')}</span>
             <select value={speakerBProfileId} onChange={(event) => setSpeakerBProfileId(event.target.value)}>
+
               {speakerBOptions.map((profile) => (
                 <option key={profile.id} value={profile.id}>
                   {profile.display_name}
@@ -242,7 +250,7 @@ export function SessionPage() {
           </label>
 
           <p aria-live="polite" style={{ margin: 0, color: 'var(--muted-text)' }}>
-            {selectedSpeakerAProfile?.display_name ?? 'Speaker A'} ↔ {selectedSpeakerBProfile?.display_name ?? 'Speaker B'}
+            {selectedSpeakerAProfile?.display_name ?? t('speaker_a')} ↔ {selectedSpeakerBProfile?.display_name ?? t('speaker_b')}
           </p>
         </div>
         <div className="composer-actions">
@@ -251,7 +259,7 @@ export function SessionPage() {
             onClick={createSession}
             disabled={isCreating || !authState.accessToken || !speakerAProfileId || !speakerBProfileId || speakerAProfileId === speakerBProfileId}
           >
-            {isCreating ? 'Starting...' : 'Start Conversation'}
+            {isCreating ? t('connecting') : t('start_speaking')}
           </button>
         </div>
       </div>

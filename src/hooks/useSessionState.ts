@@ -104,7 +104,7 @@ export function useSessionState(sessionId: string, participantRole: SpeakerRole,
   const socketRef = useRef<WebSocket | null>(null)
   const playbackAudioRef = useRef<HTMLAudioElement | null>(null)
   const browserCompletedPlaybackUtteranceIdRef = useRef<string | null>(null)
-  const isRefreshing = useRef(false)
+  const lastRefreshId = useRef(0)
 
   const authorizedFetch = useCallback(
     async <T,>(path: string, init?: RequestInit) => {
@@ -127,19 +127,24 @@ export function useSessionState(sessionId: string, participantRole: SpeakerRole,
   const refresh = useCallback(
     async (reason: string = 'manual') => {
       if (!sessionId.trim() || accessToken === null) return null
-      if (isRefreshing.current) return null
-
+      
+      const refreshId = ++lastRefreshId.current
       const ts = new Date().toISOString()
-      isRefreshing.current = true
       setIsLoading(true)
       setErrorMessage(null)
-      console.log(`[INSTRUMENTATION] [${ts}] refresh START. reason=${reason}, sessionId=${sessionId}`)
+      console.log(`[INSTRUMENTATION] [${ts}] refresh START. id=${refreshId}, reason=${reason}, sessionId=${sessionId}`)
 
       try {
         const nextView = await authorizedFetch<ConversationView>(`/sessions/${sessionId}/conversation-view`)
+        
+        if (refreshId < lastRefreshId.current) {
+          console.warn(`[INSTRUMENTATION] [${new Date().toISOString()}] refresh DISCARDED (stale). id=${refreshId}, latest=${lastRefreshId.current}, reason=${reason}`)
+          return null
+        }
+
         const latestItem = nextView.transcript[nextView.transcript.length - 1];
         const now = new Date().toISOString()
-        console.log(`[INSTRUMENTATION] [${now}] refresh SUCCESS. reason=${reason}`, {
+        console.log(`[INSTRUMENTATION] [${now}] refresh SUCCESS. id=${refreshId}, reason=${reason}`, {
           backend_state: nextView.backend_state,
           current_turn_speaker: nextView.current_turn_speaker,
           transcript_count: nextView.transcript.length,
@@ -148,15 +153,19 @@ export function useSessionState(sessionId: string, participantRole: SpeakerRole,
         setView(nextView)
         return nextView
       } catch (error) {
+        if (refreshId < lastRefreshId.current) {
+          return null
+        }
         const now = new Date().toISOString()
         const message = error instanceof Error ? error.message : 'conversation_view_failed'
-        console.error(`[INSTRUMENTATION] [${now}] refresh FAILURE. reason=${reason}, error=${message}`)
+        console.error(`[INSTRUMENTATION] [${now}] refresh FAILURE. id=${refreshId}, reason=${reason}, error=${message}`)
         setErrorMessage(message)
         setView(null)
         return null
       } finally {
-        setIsLoading(false)
-        isRefreshing.current = false
+        if (refreshId === lastRefreshId.current) {
+          setIsLoading(false)
+        }
       }
     },
     [accessToken, authorizedFetch, sessionId],
